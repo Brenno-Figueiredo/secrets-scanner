@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>secrets-scanner</title>
+<style>
+:root{
+  --bg:#0b0f17; --panel:#121826; --panel2:#171f30; --line:#25304a; --text:#e6ebf5; --muted:#8c98b3;
+  --accent:#6ea8ff; --accent-ink:#06101f;
+  --critical:#ff5d6c; --high:#ff9f43; --medium:#f4d35e; --low:#6ec1ff; --ok:#4ade80;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f3f5fa; --panel:#ffffff; --panel2:#f7f9fd; --line:#dbe1ee; --text:#18203a; --muted:#5d6985;
+    --accent:#2f6fe4; --accent-ink:#ffffff; --critical:#d7263d; --high:#d9730d; --medium:#a47e00; --low:#1a74b8; --ok:#16864a;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f3f5fa; --panel:#ffffff; --panel2:#f7f9fd; --line:#dbe1ee; --text:#18203a; --muted:#5d6985;
+  --accent:#2f6fe4; --accent-ink:#ffffff; --critical:#d7263d; --high:#d9730d; --medium:#a47e00; --low:#1a74b8; --ok:#16864a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 16px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#8a6bff);display:grid;place-items:center}
+.logo svg{width:22px;height:22px;stroke:#fff}
+h1{font-size:21px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:7px 12px;cursor:pointer;font:inherit;font-size:13px}
+.ghost:hover{color:var(--text);border-color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.controls{display:grid;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text]{flex:1 1 320px;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px 13px;font:14px var(--mono)}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit}
+.btn{border:0;border-radius:10px;padding:11px 18px;cursor:pointer;font-weight:600;font-size:14px}
+.primary{background:var(--accent);color:var(--accent-ink)}
+.primary:hover{filter:brightness(1.08)}
+.primary:disabled{opacity:.55;cursor:wait}
+.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.secondary:hover{border-color:var(--muted)}
+label.chk{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;cursor:pointer}
+label.chk input{width:16px;height:16px;accent-color:var(--accent)}
+.hint{color:var(--muted);font-size:12.5px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:18px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--line))}
+.stat .n{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.stat .l{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:6px 0 14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.exports{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.exports span{color:var(--muted);font-size:13px}
+.list{display:grid;gap:12px}
+.finding{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:14px 16px}
+.fh{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.badge{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--c);border:1px solid var(--c);border-radius:6px;padding:1px 8px}
+.rule{font:600 13.5px var(--mono)}
+.ft{font-weight:600}
+.loc{font:13px var(--mono);color:var(--muted);word-break:break-all}
+.val{font:13px var(--mono);margin-top:6px}
+.val b{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+pre.code{margin:10px 0 0;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:12.5px var(--mono);overflow:auto;white-space:pre-wrap;word-break:break-all}
+.meta{margin-top:10px;font-size:13px;color:var(--muted)}
+.leaked{margin-top:8px;background:color-mix(in srgb,var(--high) 14%,transparent);border:1px solid var(--high);color:var(--text);border-radius:9px;padding:8px 12px;font-size:13.5px}
+.leaked b{color:var(--high)}
+.empty,.msg{text-align:center;padding:42px 16px;color:var(--muted)}
+.empty .big{font-size:20px;color:var(--text);font-weight:600;margin-bottom:6px}
+.empty.ok .big{color:var(--ok)}
+.err{border-color:var(--critical);color:var(--text);text-align:left}
+.err b{color:var(--critical)}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:g .7s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes g{to{transform:rotate(360deg)}}
+footer{margin-top:30px;color:var(--muted);font-size:12.5px;text-align:center}
+.demo{background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid var(--accent);border-radius:10px;padding:8px 14px;font-size:13px;margin-bottom:16px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.4-3.1 8.1-8 9-4.9-.9-8-4.6-8-9V6z"/><circle cx="12" cy="11" r="2"/><path d="M12 13v3"/></svg></div>
+      <div><h1>secrets-scanner</h1><div class="sub">Segredos e dados pessoais (CPF/CNPJ) em código e no histórico do git</div></div>
+    </div>
+    <button class="ghost" id="tema" type="button" aria-label="Alternar tema">Tema</button>
+  </header>
+
+  <div class="demo" id="demo" hidden>Modo demonstração: todos os dados desta pasta são <b>falsos</b>, gerados na hora.</div>
+
+  <section class="card controls" aria-label="Varredura">
+    <div class="row">
+      <input type="text" id="caminho" placeholder="Caminho da pasta (ex.: C:\Users\voce\projeto)" spellcheck="false" autocomplete="off" aria-label="Caminho da pasta">
+      <button class="btn secondary" id="pick" type="button">Escolher pasta…</button>
+      <button class="btn primary" id="scan" type="button">Varrer</button>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="hist" checked> Incluir o histórico do git</label>
+      <span class="hint">Tudo roda no seu computador: nada é enviado para a internet.</span>
+    </div>
+  </section>
+
+  <div id="out">
+    <div class="msg">Escolha uma pasta e clique em <b>Varrer</b>.</div>
+  </div>
+
+  <footer>
+    É heurística: “nada encontrado” não prova que não há segredos, e a ferramenta não verifica se uma chave ainda está ativa.<br>
+    <span id="ver"></span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+var CFG = __CONFIG__;
+var SEV = {critical:"Crítico", high:"Alto", medium:"Médio", low:"Baixo"};
+var ORDEM = ["critical","high","medium","low"];
+var estado = {dados:null, filtro:"all"};
+
+function $(id){ return document.getElementById(id); }
+function h(tag, cls, txt){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt !== undefined && txt !== null) e.textContent = txt;
+  return e;
+}
+function cor(sev){ return "var(--" + sev + ")"; }
+
+function baixar(nome, texto, tipo){
+  var url = URL.createObjectURL(new Blob([texto], {type: tipo}));
+  var a = document.createElement("a");
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+async function chamar(rota, corpo){
+  var r = await fetch(rota, {method:"POST", headers:{"Content-Type":"application/json", "X-Token":CFG.token},
+                             body: JSON.stringify(corpo || {})});
+  var j = await r.json();
+  if (!r.ok) throw new Error(j.error || "erro inesperado");
+  return j;
+}
+
+function cartao(f){
+  var c = h("article", "finding"); c.style.setProperty("--c", cor(f.severity));
+  var top = h("div", "fh");
+  var b = h("span", "badge", SEV[f.severity] || f.severity); b.style.setProperty("--c", cor(f.severity));
+  top.appendChild(b); top.appendChild(h("span", "rule", f.rule)); top.appendChild(h("span", "ft", f.title));
+  c.appendChild(top);
+  c.appendChild(h("div", "loc", f.file + ":" + f.line));
+  var v = h("div", "val", "Valor: "); v.appendChild(h("b", null, f.masked)); c.appendChild(v);
+  c.appendChild(h("pre", "code", f.snippet));
+  if (f.commit){
+    var quando = (f.date || "").slice(0, 10);
+    c.appendChild(h("div", "meta", "Introduzido no commit " + f.commit.slice(0, 8) + " por " + (f.author || "?") + (quando ? " em " + quando : "")));
+    if (f.removed_from_code){
+      var al = h("div", "leaked");
+      var forte = h("b", null, "Já foi apagado do código, mas ainda está no histórico do git. ");
+      al.appendChild(forte); al.appendChild(document.createTextNode("Trate como vazado e troque a credencial."));
+      c.appendChild(al);
+    }
+  }
+  return c;
+}
+
+function render(){
+  var d = estado.dados, out = $("out"); out.textContent = "";
+  var s = d.report.summary, fs = d.report.findings;
+
+  var grade = h("div", "summary");
+  function stat(n, l, c){ var e = h("div", "stat"); e.style.setProperty("--c", c); e.appendChild(h("div", "n", String(n))); e.appendChild(h("div", "l", l)); grade.appendChild(e); }
+  stat(s.total, "Achados", "var(--accent)");
+  ORDEM.forEach(function(k){ stat(s.by_severity[k] || 0, SEV[k], cor(k)); });
+  stat(s.files_scanned || 0, "Arquivos lidos", "var(--line)");
+  out.appendChild(grade);
+
+  if (!fs.length){
+    var e = h("div", "card empty ok");
+    e.appendChild(h("div", "big", "Nenhum achado"));
+    e.appendChild(h("div", null, "Nenhum segredo ou dado pessoal reconhecido pelas regras em " + d.path + "."));
+    out.appendChild(e); return;
+  }
+
+  var bar = h("div", "toolbar"), chips = h("div", "chips");
+  [["all","Todos"]].concat(ORDEM.filter(function(k){ return s.by_severity[k]; }).map(function(k){ return [k, SEV[k]]; })).forEach(function(p){
+    var b = h("button", "chip", p[1] + (p[0] === "all" ? "" : " (" + s.by_severity[p[0]] + ")"));
+    b.type = "button"; b.setAttribute("aria-pressed", String(estado.filtro === p[0]));
+    b.onclick = function(){ estado.filtro = p[0]; render(); };
+    chips.appendChild(b);
+  });
+  bar.appendChild(chips);
+  var ex = h("div", "exports"); ex.appendChild(h("span", null, "Exportar:"));
+  [["JSON", "secretscan.json", function(){ return JSON.stringify(d.report, null, 2); }, "application/json"],
+   ["SARIF", "secretscan.sarif", function(){ return d.sarif; }, "application/json"],
+   ["Venator", "secretscan.jsonl", function(){ return d.venator; }, "application/x-ndjson"]].forEach(function(x){
+    var b = h("button", "ghost", x[0]); b.type = "button";
+    b.onclick = function(){ baixar(x[1], x[2](), x[3]); };
+    ex.appendChild(b);
+  });
+  bar.appendChild(ex); out.appendChild(bar);
+
+  var lista = h("div", "list");
+  fs.filter(function(f){ return estado.filtro === "all" || f.severity === estado.filtro; })
+    .forEach(function(f){ lista.appendChild(cartao(f)); });
+  out.appendChild(lista);
+}
+
+async function varrer(){
+  var btn = $("scan"), out = $("out");
+  btn.disabled = true; btn.textContent = "Varrendo…";
+  out.textContent = ""; var m = h("div", "msg"); m.appendChild(h("span", "spin")); m.appendChild(document.createTextNode("Lendo arquivos…")); out.appendChild(m);
+  try {
+    estado.dados = await chamar("/api/scan", {path: $("caminho").value, history: $("hist").checked, exclude: []});
+    estado.filtro = "all"; render();
+  } catch (e){
+    out.textContent = "";
+    var box = h("div", "card msg err"); box.appendChild(h("b", null, "Não deu para varrer: ")); box.appendChild(document.createTextNode(e.message));
+    out.appendChild(box);
+  } finally { btn.disabled = false; btn.textContent = "Varrer"; }
+}
+
+$("scan").onclick = varrer;
+$("caminho").addEventListener("keydown", function(e){ if (e.key === "Enter") varrer(); });
+$("pick").onclick = async function(){
+  var b = $("pick"); b.disabled = true;
+  try { var r = await chamar("/api/pick"); if (r.path) $("caminho").value = r.path; } catch (e) {} finally { b.disabled = false; }
+};
+$("tema").onclick = function(){
+  var raiz = document.documentElement;
+  var claro = getComputedStyle(raiz).getPropertyValue("--bg").trim() === "#f3f5fa";
+  raiz.setAttribute("data-theme", claro ? "dark" : "light");
+};
+$("caminho").value = CFG.path;
+$("ver").textContent = "secrets-scanner " + CFG.version;
+if (CFG.demo){ $("demo").hidden = false; varrer(); }
+</script>
+</body>
+</html>

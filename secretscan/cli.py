@@ -100,6 +100,11 @@ def cmd_uninstall_hook(args):
     return 0
 
 
+def cmd_gui(args):
+    from . import gui
+    return gui.serve(args.port, args.path, args.demo, not args.no_browser)
+
+
 def cmd_rules(args):
     for r in RULES:
         print(f"{r.id:26} {r.severity:9} {r.title}")
@@ -146,6 +151,13 @@ def construir_parser():
     u = sub.add_parser("uninstall-hook", help="remove o hook deste projeto")
     u.add_argument("--repo", default=".")
     u.set_defaults(func=cmd_uninstall_hook)
+
+    g = sub.add_parser("gui", help="abre a interface gráfica no navegador (local)")
+    g.add_argument("--path", default=".", help="pasta que aparece preenchida (padrão: pasta atual)")
+    g.add_argument("--port", type=int, default=8765)
+    g.add_argument("--demo", action="store_true", help="usa uma pasta de demonstração com dados falsos")
+    g.add_argument("--no-browser", action="store_true", help="não abre o navegador sozinho")
+    g.set_defaults(func=cmd_gui)
 
     r = sub.add_parser("rules", help="lista as regras")
     r.set_defaults(func=cmd_rules)

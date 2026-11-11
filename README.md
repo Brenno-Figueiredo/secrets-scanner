@@ -11,7 +11,22 @@ minutos. E apagar a linha depois não resolve, porque ela continua no histórico
 procura o segredo antes do commit e também nos commits antigos, e avisa quando ele "já foi apagado do código,
 mas ainda está no histórico".
 
-## Como rodar
+## Interface gráfica
+
+```bash
+python app.py gui                 # abre a interface no navegador
+python app.py gui --demo          # com uma pasta de demonstração (dados falsos), ideal para um print
+```
+
+![Interface do secrets-scanner](docs/interface.png)
+
+Uma página local: escolha a pasta, marque se quer o histórico do git e veja os achados por severidade, com o
+aviso de "já apagado do código, mas ainda no histórico". Exporta JSON, SARIF e o formato do Venator.
+Não precisa instalar nada e **nada sai do seu computador**: o servidor escuta só em `127.0.0.1`, confere
+`Host` e `Origin` (contra DNS rebinding), exige um token aleatório a cada execução e só mostra valores
+mascarados. Tem tema claro e escuro e se adapta a telas pequenas.
+
+## Como rodar (linha de comando)
 
 Requisito: Python 3.9 ou superior (e `git`, para histórico e hook).
 
@@ -139,7 +154,11 @@ secretscan/
   scanner.py           arquivos, index do git e histórico
   baseline.py          linha de base com HMAC
   report.py            texto, JSON, SARIF e Venator
+  gui.py               interface gráfica local (servidor em 127.0.0.1)
+  web/index.html       a página da interface
+  demo.py              pasta de demonstração com dados falsos
   hook.py              instalação do pre-commit
   cli.py               linha de comando
 tests/
+docs/                  imagem da interface
 ```

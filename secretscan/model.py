@@ -13,6 +13,8 @@ def sev_rank(sev):
 def mask_secret(rule_id, secret):
     """Versão mascarada: nunca devolve o segredo inteiro."""
     n = len(secret)
+    if rule_id == "private-key":  # o que casa é só o cabeçalho PEM, não a chave: mostrá-lo não expõe nada
+        return secret
     if rule_id in ("cpf", "cnpj"):
         return "".join("*" if c.isdigit() else c for c in secret[:-2]) + secret[-2:]
     if n <= 8:

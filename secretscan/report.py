@@ -53,7 +53,7 @@ def render_text(findings, result=None, suprimidos=0, cor=False):
     return "\n".join(linhas) + "\n"
 
 
-def render_json(findings, result=None, suprimidos=0):
+def to_dict(findings, result=None, suprimidos=0):
     dados = {
         "tool": "secrets-scanner", "version": __version__,
         "summary": {"total": len(findings), "by_severity": contagem(findings), "suppressed": suprimidos},
@@ -62,7 +62,11 @@ def render_json(findings, result=None, suprimidos=0):
     if result is not None:
         dados["summary"].update(files_scanned=result.files_scanned, skipped_binary=result.skipped_binary,
                                 skipped_large=result.skipped_large)
-    return json.dumps(dados, indent=2, ensure_ascii=False) + "\n"
+    return dados
+
+
+def render_json(findings, result=None, suprimidos=0):
+    return json.dumps(to_dict(findings, result, suprimidos), indent=2, ensure_ascii=False) + "\n"
 
 
 _NIVEL_SARIF = {"critical": "error", "high": "error", "medium": "warning", "low": "note"}
