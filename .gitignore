@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vscode/
+.idea/
+
+# Chave local da linha de base (nunca commitar) e relatórios de varredura (mencionam seus arquivos)
+.secretscan.key
+relatorio*.html
+relatorio*.json
+relatorio*.sarif
+relatorio*.jsonl
