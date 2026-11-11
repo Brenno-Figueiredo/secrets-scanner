@@ -30,7 +30,7 @@ def _hooks_dir(repo):
     if r.returncode != 0:
         raise SecretscanError(f"{repo} não é um repositório git (rode `git init` antes)")
     pasta = r.stdout.strip()
-    return pasta if os.path.isabs(pasta) else os.path.join(repo, pasta)
+    return os.path.normpath(pasta if os.path.isabs(pasta) else os.path.join(repo, pasta))
 
 
 def instalar(repo, app_py, force=False):
